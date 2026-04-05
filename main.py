@@ -1,6 +1,7 @@
 import argparse
 from crud.upload import upload_file
 from crud.list import list_buckets, list_objects
+from operations.cleanup_versions import cleanup_old_versions
 
 
 def main():
@@ -22,6 +23,13 @@ def main():
     list_parser.add_argument("bucket", nargs="?", default=None, help="Bucket name (omit to list all buckets)")
     list_parser.add_argument("--prefix", default="", help="Filter objects by prefix")
 
+    # cleanup-versions
+    cleanup_parser = subparsers.add_parser("cleanup-versions", help="Delete object versions older than 6 months")
+    cleanup_parser.add_argument("bucket", help="Target S3 bucket name")
+    cleanup_parser.add_argument("--prefix", default="", help="Filter by key prefix")
+    cleanup_parser.add_argument("--months", type=int, default=6, help="Age threshold in months (default: 6)")
+    cleanup_parser.add_argument("--apply", action="store_true", help="Actually delete (default is dry run)")
+
     args = parser.parse_args()
 
     if args.command == "upload":
@@ -31,6 +39,8 @@ def main():
             list_objects(args.bucket, args.prefix)
         else:
             list_buckets()
+    elif args.command == "cleanup-versions":
+        cleanup_old_versions(args.bucket, args.prefix, args.months, dry_run=not args.apply)
 
 
 if __name__ == "__main__":
