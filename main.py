@@ -2,6 +2,7 @@ import argparse
 from crud.upload import upload_file
 from crud.list import list_buckets, list_objects
 from operations.cleanup_versions import cleanup_old_versions
+from operations.versioning import check_versioning, file_versions, restore_previous_version
 
 
 def main():
@@ -30,6 +31,20 @@ def main():
     cleanup_parser.add_argument("--months", type=int, default=6, help="Age threshold in months (default: 6)")
     cleanup_parser.add_argument("--apply", action="store_true", help="Actually delete (default is dry run)")
 
+    # versioning
+    ver_parser = subparsers.add_parser("versioning", help="Check if versioning is enabled")
+    ver_parser.add_argument("bucket", help="Target S3 bucket name")
+
+    # file-versions
+    fv_parser = subparsers.add_parser("file-versions", help="Show version count and dates for a file")
+    fv_parser.add_argument("bucket", help="Target S3 bucket name")
+    fv_parser.add_argument("file", help="S3 object key")
+
+    # restore
+    restore_parser = subparsers.add_parser("restore", help="Restore previous version as latest")
+    restore_parser.add_argument("bucket", help="Target S3 bucket name")
+    restore_parser.add_argument("file", help="S3 object key")
+
     args = parser.parse_args()
 
     if args.command == "upload":
@@ -41,6 +56,12 @@ def main():
             list_buckets()
     elif args.command == "cleanup-versions":
         cleanup_old_versions(args.bucket, args.prefix, args.months, dry_run=not args.apply)
+    elif args.command == "versioning":
+        check_versioning(args.bucket)
+    elif args.command == "file-versions":
+        file_versions(args.bucket, args.file)
+    elif args.command == "restore":
+        restore_previous_version(args.bucket, args.file)
 
 
 if __name__ == "__main__":
