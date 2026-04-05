@@ -3,6 +3,7 @@ from crud.upload import upload_file
 from crud.list import list_buckets, list_objects
 from operations.cleanup_versions import cleanup_old_versions
 from operations.versioning import check_versioning, file_versions, restore_previous_version
+from operations.hosting import enable_static_hosting, upload_directory, deploy_react
 
 
 def main():
@@ -45,6 +46,18 @@ def main():
     restore_parser.add_argument("bucket", help="Target S3 bucket name")
     restore_parser.add_argument("file", help="S3 object key")
 
+    # host-static
+    host_parser = subparsers.add_parser("host-static", help="Enable static website hosting and upload files")
+    host_parser.add_argument("bucket", help="Target S3 bucket name")
+    host_parser.add_argument("directory", help="Local directory to upload")
+    host_parser.add_argument("--index", default="index.html", help="Index document (default: index.html)")
+    host_parser.add_argument("--error", default="index.html", help="Error document (default: index.html)")
+
+    # deploy-react
+    react_parser = subparsers.add_parser("deploy-react", help="Build and deploy a React app to S3")
+    react_parser.add_argument("bucket", help="Target S3 bucket name")
+    react_parser.add_argument("project", help="Path to React project directory")
+
     args = parser.parse_args()
 
     if args.command == "upload":
@@ -62,6 +75,11 @@ def main():
         file_versions(args.bucket, args.file)
     elif args.command == "restore":
         restore_previous_version(args.bucket, args.file)
+    elif args.command == "host-static":
+        upload_directory(args.bucket, args.directory)
+        enable_static_hosting(args.bucket, args.index, args.error)
+    elif args.command == "deploy-react":
+        deploy_react(args.bucket, args.project)
 
 
 if __name__ == "__main__":
